@@ -4,6 +4,11 @@
 
 Updated Pow requirement to `~> 1.0.19`.
 
+### Enhancements
+
+* [`PowAssent.Phoenix.ViewHelpers`] `PowAssent.Phoenix.ViewHelpers.authorization_link/3` now accepts block argument
+* [`PowAssent.Phoenix.ViewHelpers`] `PowAssent.Phoenix.ViewHelpers.deauthorization_link/3` now accepts block argument
+
 ## v0.4.6 (2020-02-16)
 
 The callback flow has been changed so sessions are now stored in the backend cache with `PowAssent.Store.SessionCache` instead of using `Plug.Session`. This prevents exposure of sensitive data, as the only thing stored in the Plug session is a random UUID.
