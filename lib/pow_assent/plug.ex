@@ -210,7 +210,10 @@ defmodule PowAssent.Plug do
   defp maybe_set_session_params_config(config, _conn), do: config
 
   defp parse_callback_response({:ok, %{user: user} = response}, provider, conn) do
-    other_params = Map.drop(response, [:user])
+    other_params =
+      response
+      |> Map.delete(:user)
+      |> Map.put(:userinfo, user)
 
     user
     |> normalize_username()
@@ -477,5 +480,24 @@ defmodule PowAssent.Plug do
     session = Map.delete(session, key)
 
     Conn.put_private(conn, @private_session_key, session)
+  end
+
+  @doc """
+  Updates provider config dynamically.
+
+  This is particularly useful in custom plugs:
+
+      defp update_provider_config(%{params: %{"provider" => "auth0"}} = conn, _opts) do
+        PowAssent.Plug.put_in_provider_config(conn, , )
+        |>
+  """
+  @spec update_provider_config(Conn.t(), binary(), Keyword.t()) :: Conn.t()
+  def update_provider_config(conn, provider, new_config) do
+    pow_config      = Pow.Plug.fetch_config(conn)
+    config          = fetch_config(conn)
+    provider_config = Config.get_provider_config(config, provider)
+    updated_config  = Keyword.merge(provider_config, new_config)
+
+    Pow.Plug.put_config(conn, Config.put(pow_config, :pow_assent, updated_config))
   end
 end
