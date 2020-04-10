@@ -36,7 +36,7 @@ Add PowAssent to your list of dependencies in `mix.exs`:
 defp deps do
   [
     # ...
-    {:pow_assent, "~> 0.4.5"},
+    {:pow_assent, "~> 0.4.6"},
 
     # Optional, but recommended for SSL validation with :httpc adapter
     {:certifi, "~> 2.4"},
@@ -194,10 +194,12 @@ For OIDC requests a nonce may be required. PowAssent can automatically generate 
 ```elixir
 config :my_app, :pow_assent,
   providers: [
-    github: [
+    example: [
       client_id: "REPLACE_WITH_CLIENT_ID",
+      site: "https://server.example.com",
+      authorization_params: [scope: "user:read user:write"]
       nonce: true,
-      strategy: Assent.Strategy.AzureAD
+      strategy: Assent.Strategy.OIDC
     ]
   ]
 ```
@@ -303,7 +305,7 @@ PowAssent will pick it up in the authorization flow, and prevent creating a user
 
 By default Erlangs built-in `:httpc` is used for requests. SSL verification is automatically enabled when `:certifi` and `:ssl_verify_fun` packages are available. `:httpc` only supports HTTP/1.1.
 
-If you would like HTTP/2 support, you should consider adding [`Mint`](https://github.com/ninenines/mint) to your project.
+If you would like HTTP/2 support, you should consider adding [`Mint`](https://github.com/elixir-mint/mint) to your project.
 
 Update `mix.exs`:
 
@@ -382,7 +384,7 @@ Routes.pow_assent_authorization_path(conn, :new, provider, persistent_session: t
 
 The e-mail fetched from the provider params is assumed confirmed if an `email_verified` key with value `true` also exists in the params. In that case the user will have `:email_confirmed_at` set. If `email_verified` isn't `true` in the provider params, or the user provides the e-mail, then the user will have to confirm their e-mail before they can sign in.
 
-To prevent user enumeration attacks whenever there is a unique constraint error for e-mail the user will see confirmation required error message. However if `email_verified` is `true` in the provider params they will be see the form with changeset error.
+To prevent user enumeration attacks whenever there is a unique constraint error for e-mail the user will see confirmation required error message. However if `email_verified` is `true` in the provider params they will be see the form with changeset error. The same happens if `pow_prevent_information_leak: false` is set in `conn.private`.
 
 ### PowInvitation
 

@@ -1,8 +1,14 @@
 # Changelog
 
-## v0.4.6 (TBA)
+## v0.4.7 (TBA)
 
-The callback flow has been changed so sessions are now stored in the backend cache with `PowAssent.Store.Session` instead of using `Plug.Session`. This prevents exposure of sensitive data, as the only thing stored in the Plug session is a random UUID.
+Updated Pow requirement to `~> 1.0.19`.
+
+## v0.4.6 (2020-02-16)
+
+The callback flow has been changed so sessions are now stored in the backend cache with `PowAssent.Store.SessionCache` instead of using `Plug.Session`. This prevents exposure of sensitive data, as the only thing stored in the Plug session is a random UUID.
+
+Updated Pow requirement to `~> 1.0.17`.
 
 ### Enhancements
 
@@ -12,16 +18,23 @@ The callback flow has been changed so sessions are now stored in the backend cac
 * [`PowAssent.Phoenix.AuthorizationController`] Now stores `:changeset` in session when redirecting to `:add_user_id` page
 * [`PowAssent.Phoenix.AuthorizationController`] Now sets persistent session with `PowPersistentSession` if the extension is enabled and `conn.params` has `persistent_session` set to `true`
 * [`PowAssent.Phoenix.RegistrationController`] Now prevents user enumeration attack using `PowEmailConfirmation.Phoenix.ControllerCallbacks` when `PowEmailConfirmation` extension is enabled
+[`PowAssent.Phoenix.RegistrationController`] Now prevents user enumeration attack using `PowEmailConfirmation.Phoenix.ControllerCallbacks` when `PowEmailConfirmation` extension is enabled
+* [`PowAssent.Phoenix.RegistrationController`] Now prevents user enumeration attack using `PowEmailConfirmation.Phoenix.ControllerCallbacks` when `PowEmailConfirmation` extension is enabled
 * [`PowAssent.Phoenix.RegistrationController`] Now uses `:changeset` stored in the session when rendering `:add_user_id` page
 * [`PowAssent.Plug`] Moved business logic away from `PowAssent.Phoenix.AuthorizationController` into `PowAssent.Plug.callback_upsert/4` that will authenticate, upsert user identity, or create user
-* [`PowAssent.Store.Session`] Added session store module
+* [`PowAssent.Store.SessionCache`] Added session store module
 * [`PowAssent.Plug`] Added `PowAssent.Plug.init_session/1`
 * [`PowAssent.Plug`] Added `PowAssent.Plug.put_session/3`
 * [`PowAssent.Plug`] Added `PowAssent.Plug.delete_session/2`
 
-## Bug fixes
+### Bug fixes
 
 * [`PowAssent.Ecto.Schema`] Fixed issue in `PowAssent.Ecto.Schema.changeset/2` where confirmation token was not set thus allowing users with unconfirmed email to sign in
+
+### Documentation
+
+* Added [legacy migration guide](guides/legacy_migration.md)
+* Added [API guide](guides/api.md)
 
 ## v0.4.5 (2019-12-06)
 

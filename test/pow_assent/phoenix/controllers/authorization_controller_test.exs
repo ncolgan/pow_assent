@@ -5,17 +5,19 @@ defmodule PowAssent.Phoenix.AuthorizationControllerTest do
 
   alias Plug.Conn
   alias PowAssent.Test.Ecto.Users.User
+  alias Pow.Plug, as: PowPlug
+  alias PowInvitation.Plug, as: PowInvitationPlug
 
   @provider "test_provider"
   @callback_params %{code: "test", redirect_uri: "", state: "token"}
 
-  setup %{conn: conn} do
+  setup do
     user   = %User{id: 1}
     bypass = Bypass.open()
 
     put_oauth2_env(bypass)
 
-    {:ok, user: user, bypass: bypass, conn: conn}
+    {:ok, user: user, bypass: bypass}
   end
 
   defmodule FailAuthorizeURL do
@@ -40,10 +42,12 @@ defmodule PowAssent.Phoenix.AuthorizationControllerTest do
     end
 
     test "redirects with stored invitation_token", %{conn: conn} do
-      conn = get conn, Routes.pow_assent_authorization_path(conn, :new, @provider, invitation_token: "token")
+      signed_token = sign_invitation_token(conn, "token")
+
+      conn = get conn, Routes.pow_assent_authorization_path(conn, :new, @provider, invitation_token: signed_token)
 
       assert conn.private[:plug_session]["pow_assent_session"]
-      assert get_pow_assent_session(conn, :invitation_token) == "token"
+      assert get_pow_assent_session(conn, :invitation_token) == signed_token
     end
 
     test "redirects with stored persistent session option", %{conn: conn} do
@@ -346,9 +350,11 @@ defmodule PowAssent.Phoenix.AuthorizationControllerTest do
     test "with invitation_token updates user as accepted invitation", %{conn: conn, bypass: bypass} do
       expect_oauth2_flow(bypass, user: %{sub: "new_identity"})
 
+      signed_token = sign_invitation_token(conn, "token")
+
       conn =
         conn
-        |> Conn.put_private(:pow_assent_session, %{session_params: %{state: "token"}, invitation_token: "token"})
+        |> Conn.put_private(:pow_assent_session, %{session_params: %{state: "token"}, invitation_token: signed_token})
         |> Phoenix.ConnTest.dispatch(InvitationEndpoint, :get, Routes.pow_assent_authorization_path(conn, :callback, @provider, @callback_params))
 
       assert redirected_to(conn) == "/session_created"
@@ -383,10 +389,10 @@ defmodule PowAssent.Phoenix.AuthorizationControllerTest do
   alias PowAssent.Test.WithAccessToken.Phoenix.Endpoint, as: WithAccessTokenEndpoint
   alias PowAssent.Test.WithAccessToken.Users.User, as: WithAccessTokenUser
   describe "GET /auth/:provider/callback recording strategy params" do
-    setup context do
+    setup do
       user = %WithAccessTokenUser{id: 1}
 
-      {:ok, %{context | user: user}}
+      {:ok, user: user}
     end
 
     test "with new identity", %{conn: conn, bypass: bypass, user: user} do
@@ -459,5 +465,11 @@ defmodule PowAssent.Phoenix.AuthorizationControllerTest do
 
   defp get_pow_assent_session(conn, key) do
     Map.get(conn.private[:pow_assent_session], key)
+  end
+
+  defp sign_invitation_token(conn, token) do
+    %{conn | secret_key_base: InvitationEndpoint.config(:secret_key_base)}
+    |> PowPlug.put_config([])
+    |> PowInvitationPlug.sign_invitation_token(%{invitation_token: token})
   end
 end

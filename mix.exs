@@ -1,7 +1,7 @@
 defmodule PowAssent.MixProject do
   use Mix.Project
 
-  @version "0.4.5"
+  @version "0.4.6"
 
   def project do
     [
@@ -31,7 +31,7 @@ defmodule PowAssent.MixProject do
 
   defp deps do
     [
-      {:pow, "~> 1.0.16"},
+      {:pow, "~> 1.0.19"},
       {:assent, "~> 0.1.2"},
 
       {:ecto, "~> 2.2 or ~> 3.0"},
@@ -78,6 +78,7 @@ defmodule PowAssent.MixProject do
         "guides/set_up_pow.md": [],
         "guides/capture_access_token.md": [],
         "guides/legacy_migration.md": [],
+        "guides/api.md": [],
       ],
       groups_for_modules: [
         Ecto: ~r/^PowAssent.Ecto/,

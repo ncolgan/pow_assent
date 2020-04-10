@@ -15,7 +15,7 @@ defmodule PowAssent.Plug do
         ]
   """
   alias Plug.Conn
-  alias PowAssent.{Config, Operations, Store.Session}
+  alias PowAssent.{Config, Operations, Store.SessionCache}
   alias Pow.{Plug, Store.Backend.EtsCache, UUID}
 
   @doc """
@@ -171,7 +171,6 @@ defmodule PowAssent.Plug do
     case Pow.Plug.current_user(conn) do
       nil ->
         conn
-        |> Conn.put_private(:pow_assent_callback_action, :create_user)
         |> create_user(user_identity_params, user_params)
         |> case do
           {:ok, _user, conn} ->
@@ -258,7 +257,7 @@ defmodule PowAssent.Plug do
     |> Operations.get_user_by_provider_uid(uid, config)
     |> case do
       nil  -> {:error, conn}
-      user -> {:ok, Plug.get_plug(config).do_create(conn, user, config)}
+      user -> {:ok, Plug.create(conn, user)}
     end
   end
 
@@ -281,7 +280,7 @@ defmodule PowAssent.Plug do
     user
     |> Operations.upsert(user_identity_params, config)
     |> case do
-      {:ok, user_identity} -> {:ok, user_identity, Plug.get_plug(config).do_create(conn, user, config)}
+      {:ok, user_identity} -> {:ok, user_identity, Plug.create(conn, user)}
       {:error, error}      -> {:error, error, conn}
     end
   end
@@ -298,7 +297,7 @@ defmodule PowAssent.Plug do
     user_identity_params
     |> Operations.create_user(user_params, user_id_params, config)
     |> case do
-      {:ok, user}     -> {:ok, user, Plug.get_plug(config).do_create(conn, user, config)}
+      {:ok, user}     -> {:ok, user, Plug.create(conn, user)}
       {:error, error} -> {:error, error, conn}
     end
   end
@@ -401,8 +400,8 @@ defmodule PowAssent.Plug do
 
   The session store can be changed by setting `:session_store` config option.
   By default it's
-  `{PowAssent.Store.Session, backend: Pow.Store.Backend.EtsCache}`. The backend
-  store can be changed by setting `:cache_store_backend` for the Pow
+  `{PowAssent.Store.SessionCache, backend: Pow.Store.Backend.EtsCache}`. The
+  backend store can be changed by setting `:cache_store_backend` for the Pow
   configuration.
   """
   @spec init_session(Conn.t()) :: Conn.t()
@@ -445,7 +444,7 @@ defmodule PowAssent.Plug do
   defp default_store(pow_config) do
     backend = Config.get(pow_config, :cache_store_backend, EtsCache)
 
-    {Session, [backend: backend]}
+    {SessionCache, [backend: backend]}
   end
 
   defp put_session_value(%{private: %{@private_session_info_key => :write, @private_session_key => session}} = conn, config, pow_config) when session != %{} do
